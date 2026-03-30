@@ -256,7 +256,7 @@
 <div class="last-updated" id="lastUpdated"></div>
 
 <script>
-const API_KEY = "a80b4f83-3eb2-4e99-94fe-dba575f70b0e"; //
+const PROXY_URL = "https://r6-proxy.vercel.app/api/r6stats"; // Vercel proxy
 
 const PLAYERS = [
   { name: "SirKaur",  platform: "psn" },
@@ -419,20 +419,10 @@ async function loadPlayer(player, cardEl) {
     `;
   }
 
-  if (!API_KEY || API_KEY === "YOUR_API_KEY_HERE") {
-    renderError(cardEl, player, "API key not set. Open the code and replace YOUR_API_KEY_HERE with your tracker.gg key.");
-    return;
-  }
-
-  const url = `https://public-api.tracker.gg/v2/r6siege/standard/profile/${player.platform}/${encodeURIComponent(player.name)}`;
+  const url = `${PROXY_URL}?platform=${player.platform}&username=${encodeURIComponent(player.name)}`;
 
   try {
-    const res = await fetch(url, {
-      headers: {
-        "TRN-Api-Key": API_KEY,
-        "Accept": "application/json",
-      }
-    });
+    const res = await fetch(url);
 
     if (res.status === 429) { renderError(cardEl, player, "Rate limited. Please wait a minute and retry."); return; }
     if (res.status === 404) { renderError(cardEl, player, "Player not found. Check the PSN username."); return; }
