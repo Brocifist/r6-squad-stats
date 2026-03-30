@@ -57,9 +57,10 @@
   .username { font-size: 1rem; font-weight: 700; color: #fff; text-align: center; word-break: break-all; }
   .rank-badge {
     display: inline-flex; align-items: center; gap: 5px;
-    background: #1e1e2e; border-radius: 20px; padding: 3px 10px;
-    font-size: 0.75rem; font-weight: 600; color: #f5a623; border: 1px solid #3a3a4a;
+    background: #1e1e2e; border-radius: 20px; padding: 4px 12px;
+    font-size: 0.78rem; font-weight: 600; border: 1px solid #3a3a4a;
   }
+  .rank-img { width: 20px; height: 20px; object-fit: contain; }
 
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .stat { background: #1a1a26; border-radius: 8px; padding: 8px 6px; text-align: center; }
@@ -102,7 +103,7 @@
 
 <header>
   <h1>⚔ R6S Squad Dashboard</h1>
-  <p>Rainbow Six Siege — Ranked Season Stats</p>
+  <p>Rainbow Six Siege — Current Ranked Season Stats</p>
 </header>
 
 <div class="dashboard" id="dashboard"></div>
@@ -112,36 +113,12 @@
 const PROXY_URL = "https://r6-proxy.vercel.app/api/r6stats";
 
 const PLAYERS = [
-  { name: "SirKaur"  },
-  { name: "sysaxis"  },
-  { name: "Ow4er"    },
-  { name: "iFriis_"  },
-  { name: "Olesc"    },
+  "SirKaur", "sysaxis", "Ow4er", "iFriis_", "Olesc"
 ];
 
-const RANK_COLORS = {
-  copper: "#b87333", bronze: "#cd7f32", silver: "#b0bec5",
-  gold: "#f5a623", platinum: "#00bcd4", emerald: "#2ecc71",
-  diamond: "#9b59b6", champion: "#ffd700"
-};
-
-const RANK_ICONS = {
-  copper: "🟤", bronze: "🥉", silver: "🥈", gold: "🥇",
-  platinum: "💠", emerald: "💚", diamond: "💎", champion: "👑"
-};
-
-function getRankStyle(rankName) {
-  if (!rankName) return { color: "#888", icon: "❓" };
-  const l = rankName.toLowerCase();
-  for (const key of Object.keys(RANK_COLORS)) {
-    if (l.includes(key)) return { color: RANK_COLORS[key], icon: RANK_ICONS[key] };
-  }
-  return { color: "#888", icon: "🎖" };
-}
-
-function fmt(v, d = 2) {
-  if (v == null) return "—";
-  return typeof v === "number" ? v.toFixed(d) : v;
+function fmt(v, d=2) {
+  if (v == null || isNaN(v)) return "—";
+  return Number(v).toFixed(d);
 }
 function fmtInt(v) {
   if (v == null) return "—";
@@ -153,79 +130,107 @@ function loadingHTML(name) {
     <div class="card-header">
       <div class="avatar">${name[0]}</div>
       <div class="username">${name}</div>
-      <div class="rank-badge">⏳ Loading...</div>
+      <div class="rank-badge" style="color:#888">⏳ Loading...</div>
     </div>
     <div class="loading"><div class="spinner"></div><span>Fetching stats…</span></div>`;
 }
 
 function errorHTML(name, msg) {
-  const url = `https://www.ubisoft.com/en-gb/game/rainbow-six/siege/stats`;
   return `
     <div class="card-header">
       <div class="avatar">${name[0]}</div>
       <div class="username">${name}</div>
     </div>
-    <div class="error-box">${msg}<a href="${url}" target="_blank">Ubisoft Stats ↗</a></div>
+    <div class="error-box">${msg}
+      <a href="https://r6data.eu/profile/psn/${encodeURIComponent(name)}" target="_blank">View on R6Data ↗</a>
+    </div>
     <button class="refresh-btn" onclick="loadPlayer('${name}', this.closest('.card'))">↻ Retry</button>`;
 }
 
+function parseData(data) {
+  // --- Ranked stats from platform_families_full_profiles ---
+  const boardProfiles = data.stats
+    ?.platform_families_full_profiles?.[0]
+    ?.board_ids_full_profiles ?? [];
+
+  const rankedBoard = boardProfiles.find(b => b.board_id === "pvp_ranked");
+  const ranked = rankedBoard?.full_profiles?.[0]?.profile ?? null;
+
+  const kills  = ranked?.kills  ?? null;
+  const deaths = ranked?.deaths ?? null;
+  const wins   = ranked?.wins   ?? null;
+  const losses = ranked?.losses ?? null;
+  const rp     = ranked?.rank_points ?? null;
+
+  const kd = (kills != null && deaths != null && deaths > 0)
+    ? kills / deaths : (kills != null && deaths === 0 ? kills : null);
+  const wl = (wins != null && losses != null && losses > 0)
+    ? wins / losses : (wins != null && losses === 0 ? wins : null);
+
+  // --- Rank name + image from seasonal history (most recent entry) ---
+  const history = data.seasonal?.data?.history?.data ?? [];
+  const latestEntry = history[0]; // most recent
+  const rankName  = latestEntry?.[1]?.metadata?.rank  ?? "Unranked";
+  const rankColor = latestEntry?.[1]?.metadata?.color ?? "#888";
+  const rankImg   = latestEntry?.[1]?.metadata?.imageUrl ?? null;
+
+  // --- Last 5 matches from rank points timeline ---
+  // A win = RP went up or stayed same after placement, loss = RP went down
+  const matchBoxes = history.slice(0, 5).map((entry, i) => {
+    const curr = entry[1]?.value ?? 0;
+    const prev = history[i + 1]?.[1]?.value;
+    if (prev == null) return `<div class="match unknown">?</div>`;
+    const won = curr >= prev;
+    return `<div class="match ${won ? 'win' : 'loss'}">${won ? 'W' : 'L'}</div>`;
+  }).join("") || Array(5).fill(`<div class="match unknown">?</div>`).join("");
+
+  return { kills, deaths, wins, losses, kd, wl, rp, rankName, rankColor, rankImg, matchBoxes };
+}
+
 function renderStats(cardEl, name, data) {
-  const { stats, history } = data;
+  const { kills, deaths, wins, losses, kd, wl, rp, rankName, rankColor, rankImg, matchBoxes } = parseData(data);
 
-  // Pull current season ranked data
-  const seasons = stats?.seasons || stats?.ranked?.seasons || [];
-  const current = Array.isArray(seasons) ? seasons[0] : null;
-
-  const kills  = current?.kills         ?? stats?.ranked?.kills;
-  const deaths = current?.deaths        ?? stats?.ranked?.deaths;
-  const wins   = current?.wins          ?? stats?.ranked?.wins;
-  const losses = current?.losses        ?? stats?.ranked?.losses;
-  const kd     = (kills != null && deaths != null && deaths > 0)
-                   ? (kills / deaths) : (current?.kd ?? stats?.ranked?.kd);
-  const wl     = (wins != null && losses != null && losses > 0)
-                   ? (wins / losses) : null;
-  const rankName = current?.rank?.name  ?? stats?.ranked?.rank?.name ?? null;
-  const mmr      = current?.mmr         ?? stats?.ranked?.mmr ?? null;
-
-  const { color, icon } = getRankStyle(rankName);
-
-  // Match history — last 5
-  const matches = history?.matches ?? history?.data ?? [];
-  const last5 = matches.slice(0, 5);
-  const matchBoxes = last5.length > 0
-    ? last5.map(m => {
-        const won = m.won === true || m.result === "win" || m.outcome === "win";
-        return `<div class="match ${won ? 'win' : 'loss'}">${won ? 'W' : 'L'}</div>`;
-      }).join("")
-    : Array(5).fill(`<div class="match unknown">?</div>`).join("");
+  const rankBadge = rankImg
+    ? `<img class="rank-img" src="${rankImg}" alt="${rankName}"> <span style="color:${rankColor}">${rankName}</span>`
+    : `<span style="color:${rankColor}">${rankName}</span>`;
 
   cardEl.innerHTML = `
     <div class="card-header">
       <div class="avatar">${name[0]}</div>
       <div class="username">${name}</div>
-      <div class="rank-badge" style="color:${color};border-color:${color}44">
-        ${icon} ${rankName ?? "Unranked"}
-        ${mmr ? `<span style="color:#666;font-size:0.65rem">(${fmtInt(mmr)})</span>` : ""}
+      <div class="rank-badge">${rankBadge}
+        ${rp != null ? `<span style="color:#666;font-size:0.65rem">(${fmtInt(rp)} RP)</span>` : ""}
       </div>
     </div>
     <div class="stats-grid">
-      <div class="stat"><div class="stat-value">${fmtInt(kills)}</div><div class="stat-label">Kills</div></div>
-      <div class="stat"><div class="stat-value">${fmt(kd)}</div><div class="stat-label">K/D</div></div>
-      <div class="stat"><div class="stat-value">${fmtInt(wins)}</div><div class="stat-label">Wins</div></div>
-      <div class="stat"><div class="stat-value">${fmtInt(losses)}</div><div class="stat-label">Losses</div></div>
+      <div class="stat">
+        <div class="stat-value">${fmtInt(kills)}</div>
+        <div class="stat-label">Kills</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">${fmt(kd)}</div>
+        <div class="stat-label">K/D</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">${fmtInt(wins)}</div>
+        <div class="stat-label">Wins</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">${fmtInt(losses)}</div>
+        <div class="stat-label">Losses</div>
+      </div>
       <div class="stat full-width">
         <div class="stat-value">${wl != null ? fmt(wl) : "—"}</div>
         <div class="stat-label">W/L Ratio</div>
       </div>
     </div>
-    <div class="section-title">Last 5 Matches</div>
+    <div class="section-title">Last 5 Ranked Matches</div>
     <div class="match-history">${matchBoxes}</div>
     <button class="refresh-btn" onclick="loadPlayer('${name}', this.closest('.card'))">↻ Refresh</button>`;
 }
 
 async function loadPlayer(name, cardEl) {
   cardEl.innerHTML = loadingHTML(name);
-
   try {
     const res = await fetch(`${PROXY_URL}?username=${encodeURIComponent(name)}`);
     if (!res.ok) {
@@ -234,13 +239,7 @@ async function loadPlayer(name, cardEl) {
       return;
     }
     const data = await res.json();
-
-    // If data looks empty/errored from r6data side
-    if (data.stats?.error || data.account?.error) {
-      cardEl.innerHTML = errorHTML(name, data.stats?.error ?? data.account?.error ?? "Player not found");
-      return;
-    }
-
+    if (data.error) { cardEl.innerHTML = errorHTML(name, data.error); return; }
     renderStats(cardEl, name, data);
   } catch (err) {
     cardEl.innerHTML = errorHTML(name, `Failed to load: ${err.message}`);
@@ -250,16 +249,16 @@ async function loadPlayer(name, cardEl) {
 async function loadAll() {
   const dashboard = document.getElementById("dashboard");
   dashboard.innerHTML = "";
-  for (const p of PLAYERS) {
+  const cards = PLAYERS.map(name => {
     const card = document.createElement("div");
     card.className = "card";
-    card.innerHTML = loadingHTML(p.name);
+    card.innerHTML = loadingHTML(name);
     dashboard.appendChild(card);
-  }
-  const cards = [...dashboard.querySelectorAll(".card")];
+    return card;
+  });
   for (let i = 0; i < PLAYERS.length; i++) {
-    await loadPlayer(PLAYERS[i].name, cards[i]);
-    await new Promise(r => setTimeout(r, 300));
+    await loadPlayer(PLAYERS[i], cards[i]);
+    await new Promise(r => setTimeout(r, 350));
   }
   document.getElementById("lastUpdated").textContent =
     `Last updated: ${new Date().toLocaleTimeString()}`;
