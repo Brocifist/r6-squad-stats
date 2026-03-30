@@ -6,115 +6,270 @@
 <title>R6S Squad Dashboard</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
   body {
-    background: #0a0a0f;
+    background: #07070f;
     color: #e0e0e0;
     font-family: 'Segoe UI', sans-serif;
     min-height: 100vh;
-    padding: 20px;
+    padding: 28px 20px;
+    overflow-x: hidden;
   }
-  header { text-align: center; margin-bottom: 24px; }
-  header h1 { font-size: 2rem; color: #f5a623; letter-spacing: 3px; text-transform: uppercase; }
-  header p { color: #888; font-size: 0.85rem; margin-top: 4px; }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(245,166,35,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,166,35,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Floating particles */
+  .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .particle {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: #f5a623;
+    border-radius: 50%;
+    opacity: 0;
+    animation: float linear infinite;
+  }
+  @keyframes float {
+    0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
+    10%  { opacity: 0.4; }
+    90%  { opacity: 0.2; }
+    100% { transform: translateY(-10vh) translateX(40px); opacity: 0; }
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+    position: relative; z-index: 1;
+  }
+  header h1 {
+    font-size: 2.2rem;
+    color: #f5a623;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-shadow: 0 0 30px rgba(245,166,35,0.4);
+  }
+  header p { color: #666; font-size: 0.82rem; margin-top: 4px; letter-spacing: 1px; }
+
+  .header-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 12px;
+  }
+
+  .refresh-all-btn {
+    background: linear-gradient(135deg, #f5a623, #e05c00);
+    border: none; color: #000;
+    border-radius: 8px; padding: 7px 20px;
+    font-size: 0.8rem; font-weight: 700;
+    cursor: pointer; letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: opacity 0.2s, transform 0.1s;
+    box-shadow: 0 0 16px rgba(245,166,35,0.3);
+  }
+  .refresh-all-btn:hover { opacity: 0.85; transform: scale(1.03); }
+  .refresh-all-btn:active { transform: scale(0.97); }
+
+  .last-updated { font-size: 0.72rem; color: #555; }
+  .timer { font-size: 0.72rem; color: #444; }
 
   .dashboard {
     display: flex;
-    gap: 12px;
+    gap: 14px;
     justify-content: center;
     align-items: flex-start;
     flex-wrap: wrap;
+    position: relative; z-index: 1;
   }
 
   .card {
-    background: #12121a;
+    background: linear-gradient(160deg, #13131e, #0e0e18);
     border: 1px solid #2a2a3a;
-    border-radius: 12px;
-    width: 210px;
-    padding: 16px;
+    border-radius: 14px;
+    width: 220px;
+    padding: 18px 14px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 11px;
     position: relative;
     overflow: hidden;
-    transition: border-color 0.3s;
+    transition: transform 0.2s, box-shadow 0.3s;
   }
-  .card:hover { border-color: #f5a623; }
+  .card:hover { transform: translateY(-3px); }
+
+  /* Dynamic glow border based on rank color */
   .card::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #f5a623, #e05c00);
+    background: var(--rank-color, linear-gradient(90deg, #f5a623, #e05c00));
+  }
+  .card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    box-shadow: inset 0 0 0 1px var(--rank-glow, rgba(245,166,35,0.15));
+    pointer-events: none;
   }
 
-  .card-header { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .avatar {
-    width: 52px; height: 52px; border-radius: 50%;
+  /* Card header */
+  .card-header { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+  .avatar-wrap { position: relative; width: 64px; height: 64px; }
+  .avatar-rank-img {
+    width: 64px; height: 64px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 8px var(--rank-color-raw, #f5a623));
+    transition: filter 0.3s;
+  }
+  .avatar-fallback {
+    width: 64px; height: 64px; border-radius: 50%;
     background: linear-gradient(135deg, #f5a623, #e05c00);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem; font-weight: bold; color: #fff; text-transform: uppercase;
+    font-size: 1.6rem; font-weight: bold; color: #fff;
   }
+  .level-badge {
+    position: absolute;
+    bottom: -4px; right: -4px;
+    background: #1a1a2a;
+    border: 1px solid #3a3a4a;
+    border-radius: 8px;
+    padding: 1px 5px;
+    font-size: 0.6rem;
+    color: #aaa;
+    font-weight: 600;
+  }
+
   .username { font-size: 1rem; font-weight: 700; color: #fff; text-align: center; word-break: break-all; }
+
   .rank-badge {
     display: inline-flex; align-items: center; gap: 5px;
-    background: #1e1e2e; border-radius: 20px; padding: 4px 12px;
-    font-size: 0.78rem; font-weight: 600; border: 1px solid #3a3a4a;
+    background: #1a1a2a; border-radius: 20px; padding: 3px 10px;
+    font-size: 0.75rem; font-weight: 600; border: 1px solid #2a2a3a;
   }
-  .rank-img { width: 20px; height: 20px; object-fit: contain; }
+  .rank-img-small { width: 16px; height: 16px; object-fit: contain; }
 
-  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .stat { background: #1a1a26; border-radius: 8px; padding: 8px 6px; text-align: center; }
-  .stat-value { font-size: 1.1rem; font-weight: 700; color: #f5a623; }
-  .stat-label { font-size: 0.65rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+  /* Stats */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .stat { background: #10101a; border-radius: 8px; padding: 8px 6px; text-align: center; border: 1px solid #1e1e2e; }
+  .stat-value { font-size: 1.05rem; font-weight: 700; }
+  .stat-label { font-size: 0.6rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
   .stat.full-width { grid-column: span 2; }
 
-  .section-title { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: #555; text-align: center; }
+  .good  { color: #4caf50; }
+  .bad   { color: #f44336; }
+  .neutral { color: #f5a623; }
+
+  /* Win rate bar */
+  .winrate-wrap { display: flex; flex-direction: column; gap: 4px; }
+  .winrate-bar-bg {
+    height: 5px; background: #1a1a2a; border-radius: 3px; overflow: hidden;
+  }
+  .winrate-bar-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, #f44336, #f5a623, #4caf50);
+    background-size: 200% 100%;
+    transition: width 0.8s ease;
+  }
+  .winrate-label {
+    display: flex; justify-content: space-between;
+    font-size: 0.6rem; color: #555;
+  }
+
+  /* Match history */
+  .section-title { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; color: #444; text-align: center; }
   .match-history { display: flex; gap: 5px; justify-content: center; }
   .match {
-    width: 32px; height: 32px; border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.75rem; font-weight: 700;
+    width: 34px; border-radius: 7px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 700; padding: 4px 2px; gap: 2px;
+    position: relative;
   }
-  .match.win    { background: #1a3a1a; color: #4caf50; border: 1px solid #4caf50; }
-  .match.loss   { background: #3a1a1a; color: #f44336; border: 1px solid #f44336; }
-  .match.unknown{ background: #2a2a2a; color: #666;    border: 1px solid #444; }
+  .match.win  { background: #0d2a0d; color: #4caf50; border: 1px solid #2a5a2a; }
+  .match.loss { background: #2a0d0d; color: #f44336; border: 1px solid #5a2a2a; }
+  .match.unknown { background: #1a1a2a; color: #444; border: 1px solid #2a2a3a; }
+  .match:first-child { box-shadow: 0 0 8px currentColor; animation: pulse-match 2s ease-in-out infinite; }
+  @keyframes pulse-match {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  .match-rp { font-size: 0.55rem; opacity: 0.8; }
 
-  .loading { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px 0; color: #666; font-size: 0.8rem; }
-  .spinner { width: 24px; height: 24px; border: 2px solid #2a2a3a; border-top-color: #f5a623; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  /* Loading / Error */
+  .loading { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 0; color: #555; font-size: 0.8rem; }
+  .spinner { width: 26px; height: 26px; border: 2px solid #1e1e2e; border-top-color: #f5a623; border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .error-box {
-    background: #1e1010; border: 1px solid #5a2020; border-radius: 8px;
-    padding: 10px; font-size: 0.72rem; color: #cc6666; text-align: center; line-height: 1.5;
+    background: #150808; border: 1px solid #4a1a1a; border-radius: 8px;
+    padding: 10px; font-size: 0.7rem; color: #bb5555; text-align: center; line-height: 1.6;
   }
-  .error-box a { color: #f5a623; text-decoration: none; display: block; margin-top: 6px; font-weight: 600; }
-  .error-box a:hover { text-decoration: underline; }
+  .error-box a { color: #f5a623; text-decoration: none; display: block; margin-top: 5px; font-weight: 600; }
 
-  .refresh-btn {
-    background: none; border: 1px solid #3a3a4a; color: #888;
-    border-radius: 6px; padding: 4px 10px; font-size: 0.7rem;
+  .card-refresh-btn {
+    background: none; border: 1px solid #2a2a3a; color: #555;
+    border-radius: 6px; padding: 4px 10px; font-size: 0.68rem;
     cursor: pointer; align-self: center; transition: all 0.2s;
   }
-  .refresh-btn:hover { border-color: #f5a623; color: #f5a623; }
-  .last-updated { text-align: center; font-size: 0.7rem; color: #444; margin-top: 8px; }
+  .card-refresh-btn:hover { border-color: #f5a623; color: #f5a623; }
 </style>
 </head>
 <body>
 
+<!-- Particles -->
+<div class="particles" id="particles"></div>
+
 <header>
   <h1>⚔ R6S Squad Dashboard</h1>
-  <p>Rainbow Six Siege — Current Ranked Season Stats</p>
+  <p>Rainbow Six Siege — Current Ranked Season</p>
+  <div class="header-controls">
+    <button class="refresh-all-btn" onclick="loadAll()">↻ Refresh All</button>
+    <span class="last-updated" id="lastUpdated">—</span>
+    <span class="timer" id="timer"></span>
+  </div>
 </header>
 
 <div class="dashboard" id="dashboard"></div>
-<div class="last-updated" id="lastUpdated"></div>
 
 <script>
 const PROXY_URL = "https://r6-proxy.vercel.app/api/r6stats";
+const PLAYERS = ["SirKaur","sysaxis","Ow4er","iFriis_","Olesc"];
 
-const PLAYERS = [
-  "SirKaur", "sysaxis", "Ow4er", "iFriis_", "Olesc"
-];
+// --- Particles ---
+(function() {
+  const container = document.getElementById("particles");
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement("div");
+    p.className = "particle";
+    p.style.left = Math.random() * 100 + "vw";
+    p.style.animationDuration = (10 + Math.random() * 20) + "s";
+    p.style.animationDelay = (Math.random() * 15) + "s";
+    p.style.width = p.style.height = (1 + Math.random() * 2) + "px";
+    container.appendChild(p);
+  }
+})();
+
+// --- Timer ---
+let lastLoadTime = null;
+setInterval(() => {
+  if (!lastLoadTime) return;
+  const mins = Math.floor((Date.now() - lastLoadTime) / 60000);
+  document.getElementById("timer").textContent =
+    mins < 1 ? "Updated just now" : `Updated ${mins}m ago`;
+}, 15000);
 
 function fmt(v, d=2) {
   if (v == null || isNaN(v)) return "—";
@@ -124,13 +279,15 @@ function fmtInt(v) {
   if (v == null) return "—";
   return Math.round(v).toLocaleString();
 }
+function kdClass(v)  { return v == null ? "neutral" : v >= 1 ? "good" : "bad"; }
+function wlClass(v)  { return v == null ? "neutral" : v >= 1 ? "good" : "bad"; }
 
 function loadingHTML(name) {
   return `
     <div class="card-header">
-      <div class="avatar">${name[0]}</div>
+      <div class="avatar-wrap"><div class="avatar-fallback">${name[0]}</div></div>
       <div class="username">${name}</div>
-      <div class="rank-badge" style="color:#888">⏳ Loading...</div>
+      <div class="rank-badge" style="color:#555">⏳ Loading...</div>
     </div>
     <div class="loading"><div class="spinner"></div><span>Fetching stats…</span></div>`;
 }
@@ -138,23 +295,19 @@ function loadingHTML(name) {
 function errorHTML(name, msg) {
   return `
     <div class="card-header">
-      <div class="avatar">${name[0]}</div>
+      <div class="avatar-wrap"><div class="avatar-fallback">${name[0]}</div></div>
       <div class="username">${name}</div>
     </div>
     <div class="error-box">${msg}
       <a href="https://r6data.eu/profile/psn/${encodeURIComponent(name)}" target="_blank">View on R6Data ↗</a>
     </div>
-    <button class="refresh-btn" onclick="loadPlayer('${name}', this.closest('.card'))">↻ Retry</button>`;
+    <button class="card-refresh-btn" onclick="loadPlayer('${name}', this.closest('.card'))">↻ Retry</button>`;
 }
 
 function parseData(data) {
-  // --- Ranked stats from platform_families_full_profiles ---
-  const boardProfiles = data.stats
-    ?.platform_families_full_profiles?.[0]
-    ?.board_ids_full_profiles ?? [];
-
-  const rankedBoard = boardProfiles.find(b => b.board_id === "pvp_ranked");
-  const ranked = rankedBoard?.full_profiles?.[0]?.profile ?? null;
+  const boardProfiles = data.stats?.platform_families_full_profiles?.[0]?.board_ids_full_profiles ?? [];
+  const rankedBoard   = boardProfiles.find(b => b.board_id === "pvp_ranked");
+  const ranked        = rankedBoard?.full_profiles?.[0]?.profile ?? null;
 
   const kills  = ranked?.kills  ?? null;
   const deaths = ranked?.deaths ?? null;
@@ -162,74 +315,107 @@ function parseData(data) {
   const losses = ranked?.losses ?? null;
   const rp     = ranked?.rank_points ?? null;
 
-  const kd = (kills != null && deaths != null && deaths > 0)
-    ? kills / deaths : (kills != null && deaths === 0 ? kills : null);
-  const wl = (wins != null && losses != null && losses > 0)
-    ? wins / losses : (wins != null && losses === 0 ? wins : null);
+  const kd = kills != null && deaths != null
+    ? (deaths > 0 ? kills / deaths : kills) : null;
+  const wl = wins != null && losses != null
+    ? (losses > 0 ? wins / losses : wins) : null;
+  const winPct = (wins != null && losses != null && (wins + losses) > 0)
+    ? (wins / (wins + losses)) * 100 : null;
 
-  // --- Rank name + image from seasonal history (most recent entry) ---
-  const history = data.seasonal?.data?.history?.data ?? [];
-  const latestEntry = history[0]; // most recent
-  const rankName  = latestEntry?.[1]?.metadata?.rank  ?? "Unranked";
-  const rankColor = latestEntry?.[1]?.metadata?.color ?? "#888";
-  const rankImg   = latestEntry?.[1]?.metadata?.imageUrl ?? null;
+  const history    = data.seasonal?.data?.history?.data ?? [];
+  const latestEntry = history[0];
+  const rankName   = latestEntry?.[1]?.metadata?.rank  ?? "Unranked";
+  const rankColor  = latestEntry?.[1]?.metadata?.color ?? "#888";
+  const rankImg    = latestEntry?.[1]?.metadata?.imageUrl ?? null;
 
-  // --- Last 5 matches from rank points timeline ---
-  // A win = RP went up or stayed same after placement, loss = RP went down
-  const matchBoxes = history.slice(0, 5).map((entry, i) => {
+  const level = data.account?.profile?.level ?? null;
+
+  // Last 5 matches with RP delta
+  const matches = history.slice(0, 5).map((entry, i) => {
     const curr = entry[1]?.value ?? 0;
     const prev = history[i + 1]?.[1]?.value;
-    if (prev == null) return `<div class="match unknown">?</div>`;
-    const won = curr >= prev;
-    return `<div class="match ${won ? 'win' : 'loss'}">${won ? 'W' : 'L'}</div>`;
-  }).join("") || Array(5).fill(`<div class="match unknown">?</div>`).join("");
+    if (prev == null) return { result: "unknown", rp: null };
+    const delta = curr - prev;
+    return { result: delta >= 0 ? "win" : "loss", rp: delta };
+  });
 
-  return { kills, deaths, wins, losses, kd, wl, rp, rankName, rankColor, rankImg, matchBoxes };
+  return { kills, deaths, wins, losses, kd, wl, winPct, rp, rankName, rankColor, rankImg, level, matches };
 }
 
 function renderStats(cardEl, name, data) {
-  const { kills, deaths, wins, losses, kd, wl, rp, rankName, rankColor, rankImg, matchBoxes } = parseData(data);
+  const { kills, deaths, wins, losses, kd, wl, winPct, rp, rankName, rankColor, rankImg, level, matches } = parseData(data);
 
-  const rankBadge = rankImg
-    ? `<img class="rank-img" src="${rankImg}" alt="${rankName}"> <span style="color:${rankColor}">${rankName}</span>`
+  // Set card glow colour
+  cardEl.style.setProperty("--rank-color", rankColor);
+  cardEl.style.setProperty("--rank-color-raw", rankColor);
+  cardEl.style.setProperty("--rank-glow", rankColor + "22");
+  cardEl.style.boxShadow = `0 4px 32px ${rankColor}18`;
+
+  const avatarHTML = rankImg
+    ? `<img class="avatar-rank-img" src="${rankImg}" alt="${rankName}" onerror="this.style.display='none'">`
+    : `<div class="avatar-fallback">${name[0]}</div>`;
+
+  const levelHTML = level != null
+    ? `<div class="level-badge">Lv.${level}</div>` : "";
+
+  const rankBadgeHTML = rankImg
+    ? `<img class="rank-img-small" src="${rankImg}" alt=""> <span style="color:${rankColor}">${rankName}</span>`
     : `<span style="color:${rankColor}">${rankName}</span>`;
+
+  const rpHTML = rp != null
+    ? `<span style="color:#444;font-size:0.62rem">(${fmtInt(rp)} RP)</span>` : "";
+
+  const matchBoxes = matches.map((m, i) => {
+    const rpStr = m.rp != null
+      ? `<span class="match-rp">${m.rp > 0 ? "+" : ""}${m.rp}</span>` : "";
+    return `<div class="match ${m.result}">${m.result === "win" ? "W" : m.result === "loss" ? "L" : "?"}${rpStr}</div>`;
+  }).join("") || Array(5).fill(`<div class="match unknown">?</div>`).join("");
+
+  const winPctFill = winPct != null ? Math.round(winPct) : 50;
+  // Gradient position: 0%=red, 50%=orange, 100%=green
+  const fillPos = winPctFill + "%";
 
   cardEl.innerHTML = `
     <div class="card-header">
-      <div class="avatar">${name[0]}</div>
+      <div class="avatar-wrap">${avatarHTML}${levelHTML}</div>
       <div class="username">${name}</div>
-      <div class="rank-badge">${rankBadge}
-        ${rp != null ? `<span style="color:#666;font-size:0.65rem">(${fmtInt(rp)} RP)</span>` : ""}
-      </div>
+      <div class="rank-badge">${rankBadgeHTML} ${rpHTML}</div>
     </div>
     <div class="stats-grid">
       <div class="stat">
-        <div class="stat-value">${fmtInt(kills)}</div>
+        <div class="stat-value neutral">${fmtInt(kills)}</div>
         <div class="stat-label">Kills</div>
       </div>
       <div class="stat">
-        <div class="stat-value">${fmt(kd)}</div>
+        <div class="stat-value ${kdClass(kd)}">${fmt(kd)}</div>
         <div class="stat-label">K/D</div>
       </div>
       <div class="stat">
-        <div class="stat-value">${fmtInt(wins)}</div>
+        <div class="stat-value good">${fmtInt(wins)}</div>
         <div class="stat-label">Wins</div>
       </div>
       <div class="stat">
-        <div class="stat-value">${fmtInt(losses)}</div>
+        <div class="stat-value bad">${fmtInt(losses)}</div>
         <div class="stat-label">Losses</div>
       </div>
-      <div class="stat full-width">
-        <div class="stat-value">${wl != null ? fmt(wl) : "—"}</div>
+      <div class="stat full-width winrate-wrap">
+        <div class="stat-value ${wlClass(wl)}">${wl != null ? fmt(wl) : "—"}</div>
         <div class="stat-label">W/L Ratio</div>
+        ${winPct != null ? `
+        <div class="winrate-bar-bg">
+          <div class="winrate-bar-fill" style="width:${fillPos};background-position:${100 - winPctFill}% 0"></div>
+        </div>
+        <div class="winrate-label"><span>0%</span><span>${Math.round(winPct)}% WR</span><span>100%</span></div>` : ""}
       </div>
     </div>
     <div class="section-title">Last 5 Ranked Matches</div>
     <div class="match-history">${matchBoxes}</div>
-    <button class="refresh-btn" onclick="loadPlayer('${name}', this.closest('.card'))">↻ Refresh</button>`;
+    <button class="card-refresh-btn" onclick="loadPlayer('${name}', this.closest('.card'))">↻ Refresh</button>`;
 }
 
 async function loadPlayer(name, cardEl) {
+  cardEl.style.boxShadow = "";
+  cardEl.style.removeProperty("--rank-color");
   cardEl.innerHTML = loadingHTML(name);
   try {
     const res = await fetch(`${PROXY_URL}?username=${encodeURIComponent(name)}`);
@@ -260,8 +446,10 @@ async function loadAll() {
     await loadPlayer(PLAYERS[i], cards[i]);
     await new Promise(r => setTimeout(r, 350));
   }
+  lastLoadTime = Date.now();
   document.getElementById("lastUpdated").textContent =
     `Last updated: ${new Date().toLocaleTimeString()}`;
+  document.getElementById("timer").textContent = "Updated just now";
 }
 
 loadAll();
