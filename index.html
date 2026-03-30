@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>R6S Squad Dashboard</title>
+<title>R6S LANcrew Stats</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -59,6 +59,9 @@
     text-shadow: 0 0 30px rgba(245,166,35,0.4);
   }
   header p { color: #666; font-size: 0.82rem; margin-top: 4px; letter-spacing: 1px; }
+
+  /* Consistent card height */
+  .card { min-height: 520px; }
 
   .header-controls {
     display: flex;
@@ -190,9 +193,12 @@
   }
 
   /* Match history */
-  .section-title { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; color: #444; text-align: center; }
-  .match-history { display: flex; gap: 5px; justify-content: center; }
-  .match {
+  .section-title { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; color: #888; text-align: center; }
+  /* Win rate bar — uses hue shift so 0%=red, 50%=orange, 100%=green */
+  .winrate-bar-fill {
+    height: 100%; border-radius: 3px;
+    transition: width 0.8s ease;
+  }
     width: 34px; border-radius: 7px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     font-size: 0.72rem; font-weight: 700; padding: 4px 2px; gap: 2px;
@@ -233,7 +239,7 @@
 <div class="particles" id="particles"></div>
 
 <header>
-  <h1>⚔ R6S Squad Dashboard</h1>
+  <h1>⚔ R6S LANcrew Stats</h1>
   <p>Rainbow Six Siege — Current Ranked Season</p>
   <div class="header-controls">
     <button class="refresh-all-btn" onclick="loadAll()">↻ Refresh All</button>
@@ -387,6 +393,10 @@ function renderStats(cardEl, name, data) {
         <div class="stat-label">Kills</div>
       </div>
       <div class="stat">
+        <div class="stat-value bad">${fmtInt(deaths)}</div>
+        <div class="stat-label">Deaths</div>
+      </div>
+      <div class="stat">
         <div class="stat-value ${kdClass(kd)}">${fmt(kd)}</div>
         <div class="stat-label">K/D</div>
       </div>
@@ -398,12 +408,12 @@ function renderStats(cardEl, name, data) {
         <div class="stat-value bad">${fmtInt(losses)}</div>
         <div class="stat-label">Losses</div>
       </div>
-      <div class="stat full-width winrate-wrap">
+      <div class="stat ${wl != null ? '' : 'full-width'} winrate-wrap" style="${wl != null ? '' : ''}">
         <div class="stat-value ${wlClass(wl)}">${wl != null ? fmt(wl) : "—"}</div>
         <div class="stat-label">W/L Ratio</div>
         ${winPct != null ? `
         <div class="winrate-bar-bg">
-          <div class="winrate-bar-fill" style="width:${fillPos};background-position:${100 - winPctFill}% 0"></div>
+          <div class="winrate-bar-fill" style="width:${Math.round(winPct)}%;background:hsl(${Math.round(winPct * 1.2)},80%,45%)"></div>
         </div>
         <div class="winrate-label"><span>0%</span><span>${Math.round(winPct)}% WR</span><span>100%</span></div>` : ""}
       </div>
