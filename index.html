@@ -408,7 +408,7 @@ function renderStats(cardEl, name, data) {
         <div class="stat-value bad">${fmtInt(losses)}</div>
         <div class="stat-label">Losses</div>
       </div>
-      <div class="stat ${wl != null ? '' : 'full-width'} winrate-wrap" style="${wl != null ? '' : ''}">
+      <div class="stat full-width winrate-wrap">
         <div class="stat-value ${wlClass(wl)}">${wl != null ? fmt(wl) : "—"}</div>
         <div class="stat-label">W/L Ratio</div>
         ${winPct != null ? `
