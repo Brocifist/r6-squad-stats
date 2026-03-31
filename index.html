@@ -244,7 +244,7 @@
 <script>
 const PROXY_URL = "https://r6-proxy.vercel.app/api/r6stats";
 const PLAYERS = ["SirKaur","sysaxis","Ow4er","iFriis_","Olesc"];
-const BOURNE_GIF = "https://brocifist.github.io/r6-squad-stats/bourne.gif";
+const BOURNE_GIF = "https://i.imgur.com/5DAlIkW.gif"; // Jason Bourne gif
 
 // Particles
 (function(){
@@ -448,7 +448,6 @@ async function loadPlayer(name){
   } catch(err){
     card.innerHTML = errorHTML(name, `Failed to load: ${err.message}`);
   }
-  updateBourneGif();
 }
 
 async function loadAll(){
@@ -468,6 +467,8 @@ async function loadAll(){
     await loadPlayer(name);
     await new Promise(r=>setTimeout(r,350));
   }
+
+  updateBourneGif(); // Only called once, after ALL players are loaded
 
   lastLoadTime = Date.now();
   document.getElementById("lastUpdated").textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
