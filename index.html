@@ -300,7 +300,7 @@ function errorHTML(name, msg){
 
 function parseData(data){
   const boards = data.stats?.platform_families_full_profiles?.[0]?.board_ids_full_profiles ?? [];
-  const ranked  = boards.find(b=>b.board_id==="pvp_ranked")?.full_profiles?.[0]?.profile ?? null;
+  const ranked  = boards.find(b=>b.board_id==="ranked")?.full_profiles?.[0]?.profile ?? null;
 
   const kills  = ranked?.kills  ?? null;
   const deaths = ranked?.deaths ?? null;
