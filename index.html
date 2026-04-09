@@ -6,7 +6,6 @@
 <title>R6S LANcrew Stats</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
     background: #07070f;
     color: #e0e0e0;
@@ -15,19 +14,15 @@
     padding: 28px 16px;
     overflow-x: hidden;
   }
-
   body::before {
     content: '';
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background-image:
       linear-gradient(rgba(245,166,35,0.03) 1px, transparent 1px),
       linear-gradient(90deg, rgba(245,166,35,0.03) 1px, transparent 1px);
     background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
+    pointer-events: none; z-index: 0;
   }
-
   .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
   .particle {
     position: absolute; width: 2px; height: 2px;
@@ -36,28 +31,19 @@
   }
   @keyframes float {
     0%   { transform: translateY(100vh); opacity: 0; }
-    10%  { opacity: 0.4; }
-    90%  { opacity: 0.2; }
+    10%  { opacity: 0.4; } 90% { opacity: 0.2; }
     100% { transform: translateY(-10vh) translateX(40px); opacity: 0; }
   }
 
   header { text-align: center; margin-bottom: 28px; position: relative; z-index: 1; }
-  header h1 {
-    font-size: 2.2rem; color: #f5a623; letter-spacing: 4px;
-    text-transform: uppercase; text-shadow: 0 0 30px rgba(245,166,35,0.4);
-  }
+  header h1 { font-size: 2.2rem; color: #f5a623; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 30px rgba(245,166,35,0.4); }
   header p { color: #666; font-size: 0.82rem; margin-top: 4px; letter-spacing: 1px; }
-
-  .header-controls {
-    display: flex; align-items: center; justify-content: center;
-    gap: 16px; margin-top: 12px;
-  }
+  .header-controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 12px; }
   .refresh-all-btn {
     background: linear-gradient(135deg, #f5a623, #e05c00);
     border: none; color: #000; border-radius: 8px; padding: 7px 20px;
-    font-size: 0.8rem; font-weight: 700; cursor: pointer;
-    letter-spacing: 1px; text-transform: uppercase;
-    transition: opacity 0.2s, transform 0.1s;
+    font-size: 0.8rem; font-weight: 700; cursor: pointer; letter-spacing: 1px;
+    text-transform: uppercase; transition: opacity 0.2s, transform 0.1s;
     box-shadow: 0 0 16px rgba(245,166,35,0.3);
   }
   .refresh-all-btn:hover { opacity: 0.85; transform: scale(1.03); }
@@ -65,145 +51,73 @@
   .last-updated { font-size: 0.72rem; color: #555; }
   .timer { font-size: 0.72rem; color: #444; }
 
-  /* Dashboard: single column, centered */
-  .dashboard {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* Row wrapper: card + optional gif */
-  .player-row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 16px;
-    width: 100%;
-    max-width: 560px;
-    justify-content: center;
-  }
-
-  .bourne-gif {
-    width: 120px;
-    flex-shrink: 0;
-    border-radius: 8px;
-    opacity: 0.9;
-  }
+  .dashboard { display: flex; flex-direction: column; align-items: center; gap: 16px; position: relative; z-index: 1; }
+  .player-row { display: flex; flex-direction: row; align-items: center; gap: 16px; width: 100%; max-width: 560px; justify-content: center; }
+  .bourne-gif { width: 100%; border-radius: 8px; opacity: 0.9; margin-top: 4px; }
 
   .card {
     background: linear-gradient(160deg, #13131e, #0e0e18);
-    border: 1px solid #2a2a3a;
-    border-radius: 14px;
-    width: 100%;
-    max-width: 480px;
-    padding: 18px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 11px;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.3s;
+    border: 1px solid #2a2a3a; border-radius: 14px;
+    width: 100%; max-width: 480px; padding: 18px 20px;
+    display: flex; flex-direction: column; gap: 11px;
+    position: relative; overflow: hidden; transition: transform 0.2s, box-shadow 0.3s;
   }
   .card:hover { transform: translateY(-2px); }
-  .card::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: var(--rank-color, #f5a623);
-  }
-  .card::after {
-    content: '';
-    position: absolute; inset: 0; border-radius: 14px;
-    box-shadow: inset 0 0 0 1px var(--rank-glow, rgba(245,166,35,0.15));
-    pointer-events: none;
-  }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--rank-color, #f5a623); }
+  .card::after { content: ''; position: absolute; inset: 0; border-radius: 14px; box-shadow: inset 0 0 0 1px var(--rank-glow, rgba(245,166,35,0.15)); pointer-events: none; }
 
-  /* Card header: rank icon left, info center */
-  .card-header {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 14px;
-  }
+  .card-header { display: flex; flex-direction: row; align-items: center; gap: 14px; }
   .avatar-wrap { position: relative; flex-shrink: 0; width: 64px; height: 64px; }
-  .avatar-rank-img {
-    width: 64px; height: 64px; object-fit: contain;
-    filter: drop-shadow(0 0 8px var(--rank-color-raw, #f5a623));
-  }
-  .avatar-fallback {
-    width: 64px; height: 64px; border-radius: 50%;
-    background: linear-gradient(135deg, #f5a623, #e05c00);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.6rem; font-weight: bold; color: #fff;
-  }
-  .level-badge {
-    position: absolute; bottom: -4px; right: -4px;
-    background: #1a1a2a; border: 1px solid #3a3a4a;
-    border-radius: 8px; padding: 1px 5px;
-    font-size: 0.6rem; color: #aaa; font-weight: 600;
-  }
+  .avatar-rank-img { width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 0 8px var(--rank-color-raw, #f5a623)); }
+  .avatar-fallback { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #f5a623, #e05c00); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: bold; color: #fff; }
+  .level-badge { position: absolute; bottom: -4px; right: -4px; background: #1a1a2a; border: 1px solid #3a3a4a; border-radius: 8px; padding: 1px 5px; font-size: 0.6rem; color: #aaa; font-weight: 600; }
   .header-info { display: flex; flex-direction: column; gap: 4px; }
   .username { font-size: 1.1rem; font-weight: 700; color: #fff; }
-  .rank-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    background: #1a1a2a; border-radius: 20px; padding: 3px 10px;
-    font-size: 0.75rem; font-weight: 600; border: 1px solid #2a2a3a;
-    width: fit-content;
-  }
+  .rank-badge { display: inline-flex; align-items: center; gap: 5px; background: #1a1a2a; border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; font-weight: 600; border: 1px solid #2a2a3a; width: fit-content; }
   .rank-img-small { width: 16px; height: 16px; object-fit: contain; }
 
-  /* Stats: 3 columns */
+  /* Stats grid */
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-  .stat {
-    background: #10101a; border-radius: 8px; padding: 8px 6px;
-    text-align: center; border: 1px solid #1e1e2e;
-  }
+  .stat { background: #10101a; border-radius: 8px; padding: 8px 6px; text-align: center; border: 1px solid #1e1e2e; }
   .stat-value { font-size: 1.05rem; font-weight: 700; }
   .stat-label { font-size: 0.6rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
   .stat.span2 { grid-column: span 2; }
   .stat.span3 { grid-column: span 3; }
+  .good { color: #4caf50; } .bad { color: #f44336; } .neutral { color: #f5a623; }
 
-  .good { color: #4caf50; }
-  .bad  { color: #f44336; }
-  .neutral { color: #f5a623; }
-
+  /* Win rate bar */
   .winrate-wrap { display: flex; flex-direction: column; gap: 4px; }
   .winrate-bar-bg { height: 5px; background: #1a1a2a; border-radius: 3px; overflow: hidden; }
   .winrate-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
   .winrate-label { display: flex; justify-content: space-between; font-size: 0.6rem; color: #555; }
 
-  /* Match history — THIS IS THE FIX: explicit inline-flex on a fixed-size container */
-  .section-title { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1px; color: #888; text-align: center; }
-
-  .match-history {
-    display: inline-flex;
-    flex-direction: row;
-    gap: 6px;
-    justify-content: center;
-    align-self: center;
-    width: auto;
+  /* Operators section */
+  .operators-row { display: flex; gap: 8px; justify-content: space-between; }
+  .operator-card {
+    flex: 1; background: #10101a; border: 1px solid #1e1e2e;
+    border-radius: 8px; padding: 7px 6px;
+    display: flex; flex-direction: row; align-items: center; gap: 8px;
   }
+  .operator-icon { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; filter: brightness(0.9); }
+  .operator-icon-placeholder { width: 36px; height: 36px; background: #1a1a2a; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #555; }
+  .operator-info { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+  .operator-side { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.5px; color: #888; }
+  .operator-name { font-size: 0.78rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .operator-rounds { font-size: 0.62rem; color: #666; }
+  .atk-label { color: #f5a623; } .def-label { color: #4caf50; }
 
+  /* Match history */
+  .section-title { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1px; color: #888; text-align: center; }
+  .match-history { display: inline-flex; flex-direction: row; gap: 6px; justify-content: center; align-self: center; width: auto; }
   .match {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 52px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    gap: 3px;
-    flex-shrink: 0;
-    flex-grow: 0;
+    display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 48px; height: 52px; border-radius: 8px;
+    font-size: 0.8rem; font-weight: 700; gap: 3px; flex-shrink: 0; flex-grow: 0;
   }
   .match.win     { background: #1a4a1a; color: #4caf50; border: 1px solid #4caf50; }
   .match.loss    { background: #4a1a1a; color: #f44336; border: 1px solid #f44336; }
   .match.unknown { background: #1a1a2a; color: #555;    border: 1px solid #3a3a4a; }
-  .match:first-child { animation: pulse-match 2s ease-in-out infinite; }
+  .match:last-child { animation: pulse-match 2s ease-in-out infinite; }
   @keyframes pulse-match { 0%,100%{opacity:1} 50%{opacity:0.6} }
   .match-rp { font-size: 0.58rem; opacity: 0.85; }
 
@@ -211,17 +125,9 @@
   .spinner { width: 26px; height: 26px; border: 2px solid #1e1e2e; border-top-color: #f5a623; border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .error-box {
-    background: #150808; border: 1px solid #4a1a1a; border-radius: 8px;
-    padding: 10px; font-size: 0.7rem; color: #bb5555; text-align: center; line-height: 1.6;
-  }
+  .error-box { background: #150808; border: 1px solid #4a1a1a; border-radius: 8px; padding: 10px; font-size: 0.7rem; color: #bb5555; text-align: center; line-height: 1.6; }
   .error-box a { color: #f5a623; text-decoration: none; display: block; margin-top: 5px; font-weight: 600; }
-
-  .card-refresh-btn {
-    background: none; border: 1px solid #2a2a3a; color: #555;
-    border-radius: 6px; padding: 4px 10px; font-size: 0.68rem;
-    cursor: pointer; align-self: center; transition: all 0.2s;
-  }
+  .card-refresh-btn { background: none; border: 1px solid #2a2a3a; color: #555; border-radius: 6px; padding: 4px 10px; font-size: 0.68rem; cursor: pointer; align-self: center; transition: all 0.2s; }
   .card-refresh-btn:hover { border-color: #f5a623; color: #f5a623; }
 </style>
 </head>
@@ -242,16 +148,18 @@
 <div class="dashboard" id="dashboard"></div>
 
 <script>
-const PROXY_URL = "https://r6-proxy.vercel.app/api/r6stats";
-const PLAYERS = ["SirKaur","sysaxis","Ow4er","iFriis_","Olesc"];
+const PROXY_URL  = "https://r6-proxy.vercel.app/api/r6stats";
+const PLAYERS    = ["SirKaur","sysaxis","Ow4er","iFriis_","Olesc"];
 const BOURNE_GIF = "https://brocifist.github.io/r6-squad-stats/bourne.gif";
+
+// Operator icon lookup — fetched once, keyed by lowercase name
+let operatorIconMap = {};
 
 // Particles
 (function(){
   const c = document.getElementById("particles");
   for(let i=0;i<18;i++){
-    const p = document.createElement("div");
-    p.className = "particle";
+    const p = document.createElement("div"); p.className = "particle";
     p.style.left = Math.random()*100+"vw";
     p.style.animationDuration = (10+Math.random()*20)+"s";
     p.style.animationDelay = (Math.random()*15)+"s";
@@ -265,14 +173,28 @@ let lastLoadTime = null;
 setInterval(()=>{
   if(!lastLoadTime) return;
   const mins = Math.floor((Date.now()-lastLoadTime)/60000);
-  document.getElementById("timer").textContent =
-    mins < 1 ? "Updated just now" : `Updated ${mins}m ago`;
+  document.getElementById("timer").textContent = mins < 1 ? "Updated just now" : `Updated ${mins}m ago`;
 }, 15000);
 
 function fmt(v,d=2){ return (v==null||isNaN(v)) ? "—" : Number(v).toFixed(d); }
 function fmtInt(v){ return v==null ? "—" : Math.round(v).toLocaleString(); }
-function kdClass(v){ return v==null ? "neutral" : v>=1 ? "good" : "bad"; }
-function wlClass(v){ return v==null ? "neutral" : v>=1 ? "good" : "bad"; }
+function kdClass(v){ return v==null?"neutral":v>=1?"good":"bad"; }
+function wlClass(v){ return v==null?"neutral":v>=1?"good":"bad"; }
+
+// Fetch operator icon list once before loading players
+async function fetchOperatorIcons() {
+  try {
+    const res = await fetch(`${PROXY_URL}?type=operators`);
+    const data = await res.json();
+    if(Array.isArray(data)){
+      data.forEach(op => {
+        if(op.name && op.icon_url) {
+          operatorIconMap[op.name.toLowerCase()] = op.icon_url;
+        }
+      });
+    }
+  } catch(e) { console.warn("Could not fetch operator icons", e); }
+}
 
 function loadingHTML(name){
   return `
@@ -298,44 +220,112 @@ function errorHTML(name, msg){
     <button class="card-refresh-btn" onclick="loadPlayer('${name}')">↻ Retry</button>`;
 }
 
+function parseOperators(opData) {
+  // opData.split.console.playlists.ranked.operators
+  const playlists = opData?.split?.console?.playlists ?? opData?.split?.psn?.playlists ?? {};
+  const rankedOps = playlists?.ranked?.operators ?? {};
+
+  let topAtk = null, topDef = null;
+  let maxAtkRounds = -1, maxDefRounds = -1;
+
+  for(const [id, op] of Object.entries(rankedOps)){
+    const rounds = op.rounds?.seasonal?.played ?? 0;
+    const name   = op.operator ?? "";
+    // Determine side from operator name via icon map lookup
+    // r6data operatorStats doesn't give side directly, so we check our icon map
+    const side = op.side ?? null; // may not exist
+    // We'll separate by checking if name appears in atk/def lists later
+    // For now collect all and split by side field if available
+    if(!rounds) continue;
+
+    if(side === "ATK" || side === "Attacker") {
+      if(rounds > maxAtkRounds){ maxAtkRounds = rounds; topAtk = { name, rounds }; }
+    } else if(side === "DEF" || side === "Defender") {
+      if(rounds > maxDefRounds){ maxDefRounds = rounds; topDef = { name, rounds }; }
+    } else {
+      // No side field — bucket by rounds, pick top 2 overall, we'll mark unknown
+      // Fall back: just track top two separately by index parity as last resort
+    }
+  }
+
+  // Fallback: if side wasn't available, get top 2 by rounds regardless
+  if(!topAtk && !topDef) {
+    const sorted = Object.values(rankedOps)
+      .filter(op => op.rounds?.seasonal?.played > 0)
+      .sort((a,b) => (b.rounds?.seasonal?.played??0) - (a.rounds?.seasonal?.played??0));
+    if(sorted[0]) topAtk = { name: sorted[0].operator, rounds: sorted[0].rounds?.seasonal?.played, unknown: true };
+    if(sorted[1]) topDef = { name: sorted[1].operator, rounds: sorted[1].rounds?.seasonal?.played, unknown: true };
+  }
+
+  return { topAtk, topDef };
+}
+
+function operatorHTML(op, isAtk) {
+  if(!op) return `<div class="operator-card"><div class="operator-icon-placeholder">?</div><div class="operator-info"><span class="operator-side ${isAtk?'atk-label':'def-label'}">${isAtk?'⚔ ATK':'🛡 DEF'}</span><span class="operator-name">Unknown</span></div></div>`;
+  const iconUrl = operatorIconMap[op.name?.toLowerCase()];
+  const iconHTML = iconUrl
+    ? `<img class="operator-icon" src="${iconUrl}" alt="${op.name}" onerror="this.style.display='none'">`
+    : `<div class="operator-icon-placeholder">${op.name?.[0]??'?'}</div>`;
+  const label = op.unknown ? (isAtk ? '⚔ TOP 1' : '⚔ TOP 2') : (isAtk ? '⚔ ATK' : '🛡 DEF');
+  return `
+    <div class="operator-card">
+      ${iconHTML}
+      <div class="operator-info">
+        <span class="operator-side ${isAtk?'atk-label':'def-label'}">${label}</span>
+        <span class="operator-name">${op.name}</span>
+        <span class="operator-rounds">${op.rounds} rounds</span>
+      </div>
+    </div>`;
+}
+
 function parseData(data){
-  const boards = data.stats?.platform_families_full_profiles?.[0]?.board_ids_full_profiles ?? [];
-  const ranked  = boards.find(b=>b.board_id==="ranked")?.full_profiles?.[0]?.profile ?? null;
+  const boards  = data.stats?.platform_families_full_profiles?.[0]?.board_ids_full_profiles ?? [];
+  const ranked  = boards.find(b=>b.board_id==="ranked")?.full_profiles?.[0] ?? null;
+  const profile = ranked?.profile ?? null;
+  const seasonStats = ranked?.season_statistics ?? null;
 
-  const kills  = ranked?.kills  ?? null;
-  const deaths = ranked?.deaths ?? null;
-  const wins   = ranked?.wins   ?? null;
-  const losses = ranked?.losses ?? null;
-  const rp     = ranked?.rank_points ?? null;
+  const kills  = profile?.kills  ?? null;
+  const deaths = profile?.deaths ?? null;
+  const wins   = profile?.wins   ?? null;
+  const losses = profile?.losses ?? null;
+  const rp     = profile?.rank_points ?? null;
 
-  const kd = kills!=null && deaths!=null ? (deaths>0 ? kills/deaths : kills) : null;
-  const wl = wins!=null  && losses!=null ? (losses>0 ? wins/losses  : wins)  : null;
-  const winPct = (wins!=null && losses!=null && (wins+losses)>0) ? (wins/(wins+losses))*100 : null;
+  const kd = kills!=null&&deaths!=null ? (deaths>0?kills/deaths:kills) : null;
+  const wl = wins!=null&&losses!=null  ? (losses>0?wins/losses:wins)   : null;
+  const winPct = (wins!=null&&losses!=null&&(wins+losses)>0) ? (wins/(wins+losses))*100 : null;
 
-  const history     = data.seasonal?.data?.history?.data ?? [];
-  const latest      = history[0];
-  const rankName    = latest?.[1]?.metadata?.rank  ?? "Unranked";
-  const rankColor   = latest?.[1]?.metadata?.color ?? "#888";
-  const rankImg     = latest?.[1]?.metadata?.imageUrl ?? null;
-  const level       = data.account?.profile?.level ?? null;
+  // Headshot % from season_statistics if available, else from general stats
+  const hsPercent = seasonStats?.headshot_percentage
+    ?? data.stats?.profiles?.[0]?.stats?.headshotPercentage?.value
+    ?? null;
 
-  const matches = history.slice(0,5).map((e,i)=>{
+  const history    = data.seasonal?.data?.history?.data ?? [];
+  const latest     = history[0];
+  const rankName   = latest?.[1]?.metadata?.rank  ?? "Unranked";
+  const rankColor  = latest?.[1]?.metadata?.color ?? "#888";
+  const rankImg    = latest?.[1]?.metadata?.imageUrl ?? null;
+  const level      = data.account?.profile?.level ?? null;
+
+  // Matches: reversed so newest is on the right
+  const matchesRaw = history.slice(0,5).map((e,i)=>{
     const curr = e[1]?.value ?? 0;
     const prev = history[i+1]?.[1]?.value;
     if(prev==null) return {result:"unknown", rp:null};
-    return {result: curr>=prev ? "win" : "loss", rp: curr-prev};
+    return {result: curr>=prev?"win":"loss", rp: curr-prev};
   });
+  const matches = matchesRaw.reverse(); // oldest left, newest right
 
-  return {kills,deaths,wins,losses,kd,wl,winPct,rp,rankName,rankColor,rankImg,level,matches};
+  // Operators
+  const { topAtk, topDef } = parseOperators(data.operators ?? {});
+
+  return {kills,deaths,wins,losses,kd,wl,winPct,rp,rankName,rankColor,rankImg,level,matches,hsPercent,topAtk,topDef};
 }
 
-// Store KD values to find the best
 const kdMap = {};
 
 function renderStats(cardEl, name, data){
-  const {kills,deaths,wins,losses,kd,wl,winPct,rp,rankName,rankColor,rankImg,level,matches} = parseData(data);
+  const {kills,deaths,wins,losses,kd,wl,winPct,rp,rankName,rankColor,rankImg,level,matches,hsPercent,topAtk,topDef} = parseData(data);
 
-  // Store KD for comparison
   kdMap[name] = kd;
 
   cardEl.style.setProperty("--rank-color", rankColor);
@@ -346,22 +336,22 @@ function renderStats(cardEl, name, data){
   const avatarHTML = rankImg
     ? `<img class="avatar-rank-img" src="${rankImg}" alt="${rankName}" onerror="this.style.display='none'">`
     : `<div class="avatar-fallback">${name[0]}</div>`;
-
   const levelHTML = level!=null ? `<div class="level-badge">Lv.${level}</div>` : "";
-
   const rankBadge = rankImg
     ? `<img class="rank-img-small" src="${rankImg}" alt=""> <span style="color:${rankColor}">${rankName}</span>`
     : `<span style="color:${rankColor}">${rankName}</span>`;
-
   const rpHTML = rp!=null ? `<span style="color:#444;font-size:0.62rem">(${fmtInt(rp)} RP)</span>` : "";
 
-  const matchBoxes = matches.map((m,i)=>{
+  const matchBoxes = matches.map(m=>{
     const rpStr = m.rp!=null ? `<span class="match-rp">${m.rp>0?"+":""}${m.rp}</span>` : "";
-    const label = m.result==="win" ? "W" : m.result==="loss" ? "L" : "?";
+    const label = m.result==="win"?"W":m.result==="loss"?"L":"?";
     return `<div class="match ${m.result}">${label}${rpStr}</div>`;
   }).join("") || Array(5).fill(`<div class="match unknown">?</div>`).join("");
 
   const winPctFill = winPct!=null ? Math.round(winPct) : 0;
+  const hsHTML = hsPercent!=null
+    ? `<div class="stat"><div class="stat-value neutral">${fmt(hsPercent,1)}%</div><div class="stat-label">HS%</div></div>`
+    : `<div class="stat"><div class="stat-value neutral">—</div><div class="stat-label">HS%</div></div>`;
 
   cardEl.innerHTML = `
     <div class="card-header">
@@ -374,6 +364,7 @@ function renderStats(cardEl, name, data){
     <div class="stats-grid">
       <div class="stat"><div class="stat-value neutral">${fmtInt(kills)}</div><div class="stat-label">Kills</div></div>
       <div class="stat"><div class="stat-value bad">${fmtInt(deaths)}</div><div class="stat-label">Deaths</div></div>
+      ${hsHTML}
       <div class="stat"><div class="stat-value ${kdClass(kd)}">${fmt(kd)}</div><div class="stat-label">K/D</div></div>
       <div class="stat"><div class="stat-value good">${fmtInt(wins)}</div><div class="stat-label">Wins</div></div>
       <div class="stat"><div class="stat-value bad">${fmtInt(losses)}</div><div class="stat-label">Losses</div></div>
@@ -381,67 +372,55 @@ function renderStats(cardEl, name, data){
         <div class="stat-value ${wlClass(wl)}">${wl!=null?fmt(wl):"—"}</div>
         <div class="stat-label">W/L</div>
       </div>
-      <div class="stat span3 winrate-wrap">
+      <div class="stat span2 winrate-wrap">
         ${winPct!=null ? `
         <div class="winrate-bar-bg">
           <div class="winrate-bar-fill" style="width:${winPctFill}%;background:hsl(${Math.round(winPctFill*1.2)},80%,45%)"></div>
         </div>
-        <div class="winrate-label"><span>0%</span><span>${winPctFill}% Win Rate</span><span>100%</span></div>` : ""}
+        <div class="winrate-label"><span>0%</span><span>${winPctFill}% WR</span><span>100%</span></div>` : ""}
       </div>
+    </div>
+    <div class="section-title">Most Played Operators — Ranked</div>
+    <div class="operators-row">
+      ${operatorHTML(topAtk, true)}
+      ${operatorHTML(topDef, false)}
     </div>
     <div class="section-title">Last 5 Ranked Matches</div>
     <div class="match-history">${matchBoxes}</div>
     <button class="card-refresh-btn" onclick="loadPlayer('${name}')">↻ Refresh</button>`;
 }
 
-// Player row management
-const playerRows = {};
-const playerCards = {};
+const playerRows = {}, playerCards = {};
 
 function getOrCreateRow(name){
   if(playerRows[name]) return playerRows[name];
-  const row = document.createElement("div");
-  row.className = "player-row";
-  row.id = `row-${name}`;
-  const card = document.createElement("div");
-  card.className = "card";
-  card.id = `card-${name}`;
+  const row = document.createElement("div"); row.className = "player-row"; row.id = `row-${name}`;
+  const card = document.createElement("div"); card.className = "card"; card.id = `card-${name}`;
   row.appendChild(card);
-  playerRows[name] = row;
-  playerCards[name] = card;
+  playerRows[name] = row; playerCards[name] = card;
   return row;
 }
 
 function updateBourneGif(){
-  // Remove existing gif from all rows
   document.querySelectorAll(".bourne-gif").forEach(el=>el.remove());
-
-  // Find player with highest KD
   const loaded = Object.entries(kdMap).filter(([,v])=>v!=null);
-  if(loaded.length===0) return;
+  if(!loaded.length) return;
   const best = loaded.reduce((a,b)=>b[1]>a[1]?b:a)[0];
-
-  const row = playerRows[best];
-  if(!row) return;
+  const card = playerCards[best]; if(!card) return;
   const gif = document.createElement("img");
-  gif.className = "bourne-gif";
-  gif.src = BOURNE_GIF;
-  gif.alt = "Jason Bourne";
-  gif.title = `${best} has the best K/D!`;
-  row.appendChild(gif);
+  gif.className = "bourne-gif"; gif.src = BOURNE_GIF;
+  gif.alt = "Jason Bourne"; gif.title = `${best} has the best K/D!`;
+  card.appendChild(gif); // inside the card, after everything else
 }
 
 async function loadPlayer(name){
-  const card = playerCards[name];
-  if(!card) return;
-  card.style.boxShadow = "";
-  card.style.removeProperty("--rank-color");
+  const card = playerCards[name]; if(!card) return;
+  card.style.boxShadow = ""; card.style.removeProperty("--rank-color");
   card.innerHTML = loadingHTML(name);
   delete kdMap[name];
-
   try {
     const res = await fetch(`${PROXY_URL}?username=${encodeURIComponent(name)}`);
-    if(!res.ok){ const e=await res.json().catch(()=>({})); card.innerHTML=errorHTML(name,e.error??`HTTP ${res.status}`); return; }
+    if(!res.ok){ const e=await res.json().catch(()=>({}))); card.innerHTML=errorHTML(name,e.error??`HTTP ${res.status}`); return; }
     const data = await res.json();
     if(data.error){ card.innerHTML=errorHTML(name,data.error); return; }
     renderStats(card, name, data);
@@ -463,13 +442,15 @@ async function loadAll(){
     playerCards[name].innerHTML = loadingHTML(name);
   }
 
+  // Fetch operator icons once before loading players
+  await fetchOperatorIcons();
+
   for(const name of PLAYERS){
     await loadPlayer(name);
     await new Promise(r=>setTimeout(r,350));
   }
 
-  updateBourneGif(); // Only called once, after ALL players are loaded
-
+  updateBourneGif();
   lastLoadTime = Date.now();
   document.getElementById("lastUpdated").textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
   document.getElementById("timer").textContent = "Updated just now";
