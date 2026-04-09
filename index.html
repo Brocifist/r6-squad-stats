@@ -127,20 +127,19 @@ function fmtInt(v) {
 function kdClass(v) { return v == null ? "neutral" : v >= 1 ? "good" : "bad"; }
 function wlClass(v) { return v == null ? "neutral" : v >= 1 ? "good" : "bad"; }
 
+function getOperatorIconUrl(name) {
+  if (!name) return null;
+  // r6data.eu uses predictable icon URLs based on operator safename
+  var safename = name.toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[äöüß]/g, function(c) { return {ä:"a",ö:"o",ü:"u",ß:"ss"}[c] || c; })
+    .replace(/[^a-z0-9-]/g, "");
+  return "https://r6data.eu/assets/img/operators/icons/" + safename + ".webp";
+}
+
 function fetchOperatorIcons() {
-  return fetch(PROXY_URL + "?type=operators").then(function(res) {
-    return res.json();
-  }).then(function(data) {
-    if (Array.isArray(data)) {
-      data.forEach(function(op) {
-        if (op.name && op.icon_url) {
-          operatorIconMap[op.name.toLowerCase()] = op.icon_url;
-        }
-      });
-    }
-  }).catch(function(e) {
-    console.warn("Could not fetch operator icons", e);
-  });
+  // Icons are constructed from operator names directly — no API call needed
+  return Promise.resolve();
 }
 
 function loadingHTML(name) {
@@ -163,37 +162,18 @@ function errorHTML(name, msg) {
 }
 
 function getTopOperators(opData) {
-  var playlists = {};
-  if (opData && opData.split) {
-    if (opData.split.console && opData.split.console.playlists) {
-      playlists = opData.split.console.playlists;
-    } else if (opData.split.psn && opData.split.psn.playlists) {
-      playlists = opData.split.psn.playlists;
-    }
-  }
-  var rankedOps = (playlists.ranked && playlists.ranked.operators) ? playlists.ranked.operators : {};
+  // New API format: operators is a flat array with side field
+  var ops = Array.isArray(opData.operators) ? opData.operators : [];
   var atk = null, def = null, maxAtk = -1, maxDef = -1;
-
-  Object.keys(rankedOps).forEach(function(id) {
-    var op = rankedOps[id];
-    var rounds = (op.rounds && op.rounds.seasonal && op.rounds.seasonal.played) ? op.rounds.seasonal.played : 0;
+  ops.forEach(function(op) {
+    var rounds = op.roundsPlayed || 0;
     if (!rounds) return;
-    var opName = op.operator || "";
-    var side = op.side || "";
-    if (side === "ATK" || side === "Attacker") {
-      if (rounds > maxAtk) { maxAtk = rounds; atk = { name: opName, rounds: rounds }; }
-    } else if (side === "DEF" || side === "Defender") {
-      if (rounds > maxDef) { maxDef = rounds; def = { name: opName, rounds: rounds }; }
+    if (op.side === "Attacker") {
+      if (rounds > maxAtk) { maxAtk = rounds; atk = { name: op.operator, rounds: rounds }; }
+    } else if (op.side === "Defender") {
+      if (rounds > maxDef) { maxDef = rounds; def = { name: op.operator, rounds: rounds }; }
     }
   });
-
-  if (!atk && !def) {
-    var all = Object.values(rankedOps)
-      .filter(function(op) { return op.rounds && op.rounds.seasonal && op.rounds.seasonal.played > 0; })
-      .sort(function(a, b) { return b.rounds.seasonal.played - a.rounds.seasonal.played; });
-    if (all[0]) atk = { name: all[0].operator, rounds: all[0].rounds.seasonal.played, fallback: true };
-    if (all[1]) def = { name: all[1].operator, rounds: all[1].rounds.seasonal.played, fallback: true };
-  }
   return { atk: atk, def: def };
 }
 
@@ -205,9 +185,9 @@ function operatorCardHTML(op, isAtk) {
       '<div class="operator-info"><span class="operator-side ' + cls + '">' + label + '</span>' +
       '<span class="operator-name">Unknown</span></div></div>';
   }
-  var iconUrl = op.name ? operatorIconMap[op.name.toLowerCase()] : null;
+  var iconUrl = getOperatorIconUrl(op.name);
   var iconHTML = iconUrl
-    ? '<img class="operator-icon" src="' + iconUrl + '" alt="' + op.name + '">'
+    ? '<img class="operator-icon" src="' + iconUrl + '" alt="' + op.name + '" onerror="this.style.display=\'none\'">'
     : '<div class="operator-placeholder">' + (op.name ? op.name[0] : "?") + '</div>';
   return '<div class="operator-card">' + iconHTML +
     '<div class="operator-info">' +
@@ -241,12 +221,17 @@ function renderStats(cardEl, name, data) {
   var total = (wins != null && losses != null) ? wins + losses : 0;
   var winPct = total > 0 ? (wins / total) * 100 : null;
 
+  // Headshot % — calculate from operators array (weighted average across all ranked ops)
   var hsPercent = null;
-  if (seasonStats && seasonStats.headshot_percentage != null) {
-    hsPercent = seasonStats.headshot_percentage;
-  } else if (data.stats && data.stats.profiles && data.stats.profiles[0] &&
-             data.stats.profiles[0].stats && data.stats.profiles[0].stats.headshotPercentage) {
-    hsPercent = data.stats.profiles[0].stats.headshotPercentage.value;
+  if (data.operators && Array.isArray(data.operators.operators) && data.operators.operators.length > 0) {
+    var totalKills = 0, totalHeadshots = 0;
+    data.operators.operators.forEach(function(op) {
+      var k = op.kills || 0;
+      var hs = op.headshots || 0;
+      totalKills += k;
+      totalHeadshots += hs;
+    });
+    if (totalKills > 0) hsPercent = (totalHeadshots / totalKills) * 100;
   }
 
   var history   = (data.seasonal && data.seasonal.data && data.seasonal.data.history) ? data.seasonal.data.history.data || [] : [];
